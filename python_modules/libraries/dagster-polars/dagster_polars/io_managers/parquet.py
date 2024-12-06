@@ -31,7 +31,8 @@ def get_pyarrow_dataset(path: "UPath", context: InputContext) -> ds.Dataset:
         str(path),
         filesystem=fs,
         format=context_metadata.get("format", "parquet"),
-        partitioning=context_metadata.get("partitioning") or context_metadata.get("partition_by"),
+        partitioning=context_metadata.get("partitioning")
+        or context_metadata.get("partition_by"),
         partition_base_dir=context_metadata.get("partition_base_dir"),
         exclude_invalid_files=context_metadata.get("exclude_invalid_files", True),
         ignore_prefixes=context_metadata.get("ignore_prefixes", [".", "_"]),
@@ -51,7 +52,11 @@ def scan_parquet(path: "UPath", context: InputContext) -> pl.LazyFrame:
 
     storage_options = cast(
         Optional[Dict[str, Any]],
-        (path.storage_options if hasattr(path, "storage_options") else None),
+        (
+            path.storage_options
+            if (hasattr(path, "storage_options") and path.storage_options != "{}")
+            else None
+        ),
     )
 
     kwargs = dict(
@@ -70,6 +75,8 @@ def scan_parquet(path: "UPath", context: InputContext) -> pl.LazyFrame:
     else:
         kwargs["row_count_name"] = context_metadata.get("row_count_name", None)
         kwargs["row_count_offset"] = context_metadata.get("row_count_offset", 0)
+
+    print("&&&&&&&scan_parquet", path, storage_options, kwargs)
 
     return pl.scan_parquet(str(path), storage_options=storage_options, **kwargs)  # type: ignore
 
